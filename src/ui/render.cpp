@@ -236,6 +236,23 @@ static void drawRock(int x, int y) {
     dpixel(x + 4, y + 4, C_RGB(5, 5, 7)); dpixel(x + 5, y + 5, C_RGB(5, 5, 7));
 }
 
+// Fuente diminuta 3x5 propia (solo 'v', '.', digitos) para el numero de version.
+static void drawVersion(uint16_t c) {
+    static const uint8_t G[12][5] = {
+        {7,5,5,5,7},{2,6,2,2,7},{7,1,7,4,7},{7,1,7,1,7},{5,5,7,1,1},{7,4,7,1,7},
+        {7,4,7,5,7},{7,1,1,2,2},{7,5,7,5,7},{7,5,7,1,7},{5,5,5,5,2},{0,0,0,0,2}};
+    const char *t = VERSION_TEXT;
+    int n = (int)strlen(t);
+    int x = 394 - n * 4, y = 216;
+    for (int i = 0; i < n; i++, x += 4) {
+        int g = (t[i] >= '0' && t[i] <= '9') ? t[i] - '0' : (t[i] == 'v' ? 10 : (t[i] == '.' ? 11 : -1));
+        if (g < 0) continue;
+        for (int r = 0; r < 5; r++)
+            for (int b = 0; b < 3; b++)
+                if (G[g][r] & (4 >> b)) dpixel(x + b, y + r, c);
+    }
+}
+
 // ---------------------------------------------------------------- Pantallas
 void drawTitle(int frame, LoadResult lr, const SaveData &s) {
     dclear(BG);
@@ -252,6 +269,7 @@ void drawTitle(int frame, LoadResult lr, const SaveData &s) {
     ctext(198, 56, DIM, "SNAKE DIMENSION");
     drawPreview(150, 90, s.skin, frame);
     if ((frame / 15) & 1) ctext(198, 160, TXT, "Pulsa EXE");
+    drawVersion(DIM);
     if (lr == LOAD_RECOVERED) ctext(198, 190, C_RGB(31, 24, 4), "Guardado recuperado de copia");
     if (lr == LOAD_CORRUPT) ctext(198, 190, C_RGB(31, 8, 4), "Guardado danado: perfil reiniciado");
     dupdate();
@@ -293,6 +311,7 @@ void drawMenu(int sel, int frame, const SaveData &s, const char *msg) {
     else dtext(10, 192, TXT, "Tu historial y progreso.");
     if (msg && msg[0]) dtext(10, 204, C_RGB(31, 24, 4), msg);
     else dtext(10, 212, DIM, "ARRIBA/ABAJO  EXE=elegir  MENU=salir");
+    drawVersion(DIM);
     dupdate();
 }
 
