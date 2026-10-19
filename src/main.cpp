@@ -44,19 +44,30 @@ static void pump(Keys &k) {
 // Estado grande en memoria estática: la pila de gint es pequeña (~4 KB de Game+Fx
 // en la pila provocaban "stack overflow during world switch" al usar ficheros).
 static SaveData save;
+static int tmr = -1;
+static void startTimer() {
+    if (tmr >= 0) timer_stop(tmr);
+    tickFlag = 0;
+    tmr = timer_configure(TIMER_ANY, 1000000 / 30, GINT_CALL(tickCb, (void *)&tickFlag));
+    if (tmr >= 0) timer_start(tmr);
+}
+
+// Guardar usa el sistema de ficheros del SO; después se reinicia el temporizador
+// por si el cambio de mundo lo dejó parado (causaría un cuelgue esperando el frame).
+static void doSave(const SaveData &) { storeProfile(save, ioWrite); startTimer(); }
+
 static Game game;
 static Fx fx;
 
 int main(void) {
     LoadResult lr = loadProfile(save, ioRead);
 
-    int t = timer_configure(TIMER_ANY, 1000000 / 30, GINT_CALL(tickCb, (void *)&tickFlag));
-    if (t >= 0) timer_start(t);
+    startTimer();
 
     Screen scr = S_TITLE;
     fx.clear();
     int sel = 0, frame = 0, acc = 0;
-    bool record = false, runApplied = false;
+    bool record = false, runApplied = false, pendingSave = false;
     Keys k;
 
     for (;;) {
@@ -109,7 +120,7 @@ int main(void) {
             if (game.state != ST_PLAYING) {
                 record = applyRun(save, game.mode, game.score, (uint32_t)game.eaten, game.state == ST_WON);
                 runApplied = true;
-                storeProfile(save, ioWrite);   // si falla, la ranura anterior sigue válida
+                pendingSave = true;            // se guarda mostrando "Guardando..."
                 scr = S_OVER;
             }
             break;
@@ -119,7 +130,7 @@ int main(void) {
             if (k.exit) {
                 if (!runApplied && game.eaten > 0) {
                     applyRun(save, game.mode, game.score, (uint32_t)game.eaten, false);
-                    storeProfile(save, ioWrite);
+                    doSave(save);
                 }
                 runApplied = true; scr = S_MENU;
             }
@@ -129,6 +140,12 @@ int main(void) {
             fx.update();
             drawGame(game, fx, frame, save, false);
             drawOver(game, save, record);
+            if (pendingSave) {
+                pendingSave = false;
+                dtext(80, 168, C_RGB(31, 24, 4), "Guardando...");
+                dupdate();
+                doSave(save);
+            }
             if (k.exe) {
                 game.start(game.mode, rtc_ticks() ^ ((uint32_t)frame * 2654435761u));
                 fx.clear(); acc = 0; record = false; runApplied = false; scr = S_PLAY;
@@ -137,7 +154,12 @@ int main(void) {
             break;
         }
 
-        if (t >= 0) { while (!tickFlag) sleep(); tickFlag = 0; }
+        if (tmr >= 0) {
+            int guard = 0;
+            while (!tickFlag && guard++ < 2000) sleep();   // nunca esperar para siempre
+            if (!tickFlag) startTimer();                    // el temporizador se perdió: reiniciarlo
+            tickFlag = 0;
+        }
     }
     return 1;
 }
