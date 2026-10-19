@@ -56,6 +56,16 @@ static void startTimer() {
 // por si el cambio de mundo lo dejó parado (causaría un cuelgue esperando el frame).
 static void doSave(const SaveData &) { storeProfile(save, ioWrite); startTimer(); }
 
+// Guardar con poca frecuencia: solo con récord nuevo, al salir al menú, o cada 5 partidas.
+static bool dirty = false;
+static int unsaved = 0;
+static void saveNow() {
+    dtext(80, 168, C_RGB(31, 24, 4), "Guardando...");
+    dupdate();
+    doSave(save);
+    dirty = false; unsaved = 0;
+}
+
 static Game game;
 static Fx fx;
 
@@ -120,7 +130,8 @@ int main(void) {
             if (game.state != ST_PLAYING) {
                 record = applyRun(save, game.mode, game.score, (uint32_t)game.eaten, game.state == ST_WON);
                 runApplied = true;
-                pendingSave = true;            // se guarda mostrando "Guardando..."
+                dirty = true; unsaved++;
+                pendingSave = record;          // solo se guarda al instante con récord nuevo
                 scr = S_OVER;
             }
             break;
@@ -130,7 +141,7 @@ int main(void) {
             if (k.exit) {
                 if (!runApplied && game.eaten > 0) {
                     applyRun(save, game.mode, game.score, (uint32_t)game.eaten, false);
-                    doSave(save);
+                    saveNow();
                 }
                 runApplied = true; scr = S_MENU;
             }
@@ -142,15 +153,14 @@ int main(void) {
             drawOver(game, save, record);
             if (pendingSave) {
                 pendingSave = false;
-                dtext(80, 168, C_RGB(31, 24, 4), "Guardando...");
-                dupdate();
-                doSave(save);
+                saveNow();
             }
             if (k.exe) {
+                if (unsaved >= 5) saveNow();
                 game.start(game.mode, rtc_ticks() ^ ((uint32_t)frame * 2654435761u));
                 fx.clear(); acc = 0; record = false; runApplied = false; scr = S_PLAY;
             }
-            if (k.exit) scr = S_MENU;
+            if (k.exit) { if (dirty) saveNow(); scr = S_MENU; }
             break;
         }
 
