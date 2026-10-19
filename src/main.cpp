@@ -41,15 +41,20 @@ static void pump(Keys &k) {
     }
 }
 
+// Estado grande en memoria estática: la pila de gint es pequeña (~4 KB de Game+Fx
+// en la pila provocaban "stack overflow during world switch" al usar ficheros).
+static SaveData save;
+static Game game;
+static Fx fx;
+
 int main(void) {
-    SaveData save;
     LoadResult lr = loadProfile(save, ioRead);
 
     int t = timer_configure(TIMER_ANY, 1000000 / 30, GINT_CALL(tickCb, (void *)&tickFlag));
     if (t >= 0) timer_start(t);
 
     Screen scr = S_TITLE;
-    Game game; Fx fx; fx.clear();
+    fx.clear();
     int sel = 0, frame = 0, acc = 0;
     bool record = false, runApplied = false;
     Keys k;
