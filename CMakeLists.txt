@@ -9,6 +9,7 @@ set(SOURCES
     src/main.cpp
     src/core/game.cpp
     src/core/profile.cpp
+    src/core/content.cpp
     src/platform/save_io.cpp
     src/ui/render.cpp
 )
