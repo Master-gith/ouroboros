@@ -1,7 +1,7 @@
-// E/S de guardado en la fx-CG50 con gint. SIN COMPILAR NI PROBAR EN HARDWARE.
-// Ver README: la ruta de fichero debe verificarse en la calculadora real.
+// E/S de guardado en la fx-CG50 con gint.
+// v0.1.1: SIN gint_world_switch manual. El crash "stack overflow during world switch"
+// apuntaba a un cambio de mundo anidado; se usa fopen directo (gint/fxlibc gestiona el SO).
 #include "save_io.h"
-#include <gint/gint.h>
 #include <stdio.h>
 #include "../core/profile.h"
 
@@ -9,27 +9,15 @@ namespace od {
 
 static const char *SLOT_PATH[2] = { "/OUROA.sav", "/OUROB.sav" };
 
-struct IoJob { const char *path; uint8_t *buf; int write; int ok; };
-static IoJob job;
-
-// Se ejecuta fuera del "mundo gint" (con el SO), como exige el acceso a ficheros.
-static int ioRun(int unused) {
-    (void)unused;
-    FILE *f = fopen(job.path, job.write ? "wb" : "rb");
-    if (!f) { job.ok = 0; return 0; }
-    size_t n = job.write ? fwrite(job.buf, 1, SAVE_SIZE, f) : fread(job.buf, 1, SAVE_SIZE, f);
+static bool run(int slot, uint8_t *buf, bool write) {
+    FILE *f = fopen(SLOT_PATH[slot & 1], write ? "wb" : "rb");
+    if (!f) return false;
+    size_t n = write ? fwrite(buf, 1, SAVE_SIZE, f) : fread(buf, 1, SAVE_SIZE, f);
     fclose(f);
-    job.ok = (n == (size_t)SAVE_SIZE);
-    return 0;
+    return n == (size_t)SAVE_SIZE;
 }
 
-static bool run(int slot, uint8_t *buf, int write) {
-    job.path = SLOT_PATH[slot & 1]; job.buf = buf; job.write = write; job.ok = 0;
-    gint_world_switch(GINT_CALL(ioRun, 0));
-    return job.ok != 0;
-}
-
-bool ioRead(int slot, uint8_t *buf64) { return run(slot, buf64, 0); }
-bool ioWrite(int slot, const uint8_t *buf64) { return run(slot, (uint8_t *)buf64, 1); }
+bool ioRead(int slot, uint8_t *buf64) { return run(slot, buf64, false); }
+bool ioWrite(int slot, const uint8_t *buf64) { return run(slot, (uint8_t *)buf64, true); }
 
 }
