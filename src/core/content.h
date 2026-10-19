@@ -4,6 +4,7 @@
 #include "game.h"
 namespace od {
 
+constexpr const char *VERSION_TEXT = "v0.2.1";
 constexpr int SKIN_COUNT = 8, TRAIL_COUNT = 4, ACH_COUNT = 15;
 constexpr int SECRET_SKIN = 7;
 constexpr uint16_t NOT_BUYABLE = 0xFFFF;

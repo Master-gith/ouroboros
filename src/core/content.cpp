@@ -17,9 +17,9 @@ const char *const MODE_DESC[MODE_COUNT] = {
     "60 s. Cada fruta suma tiempo.",
 };
 const uint8_t MODE_LEVEL[MODE_COUNT] = {1, 1, 2, 3, 4};
-const char *const UPG_NAME[UP_COUNT] = {"ESCUDO", "TIEMPO LENTO", "COMBO LARGO", "ORO+", "ENCOGER", "PUNTOS +25%", "MONEDAS +25%"};
-const char *const UPG_D1[UP_COUNT] = {"Esquiva 2 choques", "Todo va un poco", "El combo dura", "Mas frutas", "Pierdes 3", "Cada fruta vale", "Mas monedas al"};
-const char *const UPG_D2[UP_COUNT] = {"y gira sola", "mas despacio", "mas tiempo", "doradas", "segmentos", "mas puntos", "acabar la partida"};
+const char *const UPG_NAME[UP_COUNT] = {"ESCUDO", "LENTO", "COMBO LARGO", "ORO+", "ENCOGER", "PUNTOS+25%", "MONEDAS+25%"};
+const char *const UPG_D1[UP_COUNT] = {"Esquiva 2", "Todo mas", "Combo dura", "Mas frutas", "Pierdes 3", "Cada fruta", "Mas monedas"};
+const char *const UPG_D2[UP_COUNT] = {"choques", "lento", "mas tiempo", "doradas", "segmentos", "vale mas", "al terminar"};
 const char *const ACH_NAME[ACH_COUNT] = {
     "PRIMER BOCADO", "COMBO X5", "FIEBRE", "FRUTA DORADA", "LARGO 25", "LARGO 50", "500 PUNTOS",
     "1500 PUNTOS", "3 MEJORAS", "ESCUDO USADO", "DESTRUCTOR", "RELOJERO", "DIMENSIONES",
