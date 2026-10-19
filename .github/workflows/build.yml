@@ -1,0 +1,37 @@
+name: Build g3a
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Imagen NO oficial con fxSDK + gint ya instalados (pesa unos 2 GB).
+    container: manawyrm/fxsdk:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Crear proyecto base de fxSDK y copiar nuestro codigo encima
+        run: |
+          fxsdk new proj
+          cp -r src proj/
+          mkdir -p proj/assets-cg
+          cp assets-cg/*.png proj/assets-cg/
+          cp CMakeLists.txt proj/CMakeLists.txt
+
+      - name: Compilar
+        run: |
+          cd proj
+          fxsdk build-cg
+
+      - name: Reunir el .g3a
+        run: |
+          mkdir -p out
+          find proj -name '*.g3a' -exec cp {} out/ \;
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ouroboros-g3a
+          path: out/*.g3a
