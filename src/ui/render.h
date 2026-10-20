@@ -6,18 +6,20 @@ namespace od {
 
 enum Mood : uint8_t { MOOD_NORMAL, MOOD_HAPPY, MOOD_DEAD, MOOD_FRENZY };
 
-struct Particle { int16_t x, y, vx, vy; uint8_t life; uint16_t color; };
+// kind: 0 cuadrado, 1 corazon, 2 estrella (+), 3 burbuja
+struct Particle { int16_t x, y, vx, vy; uint8_t life, kind; uint16_t color; };
 struct Ring { int16_t x, y; uint8_t r, life; uint16_t color; };
 struct FText { int16_t x, y; uint8_t life; uint16_t color; char s[8]; };
 
 struct Fx {
-    Particle p[96];
+    Particle p[112];
     Ring rg[4];
     FText ft[6];
     Rng rng;
     int flash = 0, shake = 0, ox = 0, oy = 0;
     void clear();
-    void burst(int px, int py, uint16_t color, int count, int spread = 20);
+    void emit(int px, int py, int vx, int vy, int life, uint16_t color, uint8_t kind);
+    void burst(int px, int py, uint16_t color, int count, int spread = 20, uint8_t kind = 0);
     void ring(int px, int py, uint16_t color);
     void text(int px, int py, uint16_t color, const char *s);
     void update();
@@ -29,8 +31,10 @@ struct View {
 };
 
 constexpr int CELL = 10, BOARD_X = 0, BOARD_Y = 16;
+constexpr int HEAD3D_X = 145, HEAD3D_Y = 16 + 104;   // donde se ve la cabeza en el modo 3D
 
 uint16_t hueColor(int h, int v);
+void trailParams(int trail, int frame, uint16_t &color, uint8_t &kind);
 void drawTitle(int frame, LoadResult lr, const SaveData &s);
 void drawMenu(int sel, int frame, const SaveData &s, const char *msg);
 void drawGame(const View &v);
